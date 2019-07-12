@@ -64,4 +64,12 @@ export class RolesHelper {
             ('#downloadsList downloads-item').shadowRoot.querySelector('div#content #file-link').text`);
         await ExpectationHelper.verifyStringValueContain(fileName.toString(), excelFileName);
     }
+
+    static async clickExportToWord() {
+        const label = DistrictsPage.buttons;
+        StepLogger.subStep('click export to word');
+        await PageHelperExtension.executeInIFrame([CommonPage.resourceOneIFrame], async () => {
+            await label.exportToWord.clickLink();
+        });
+    }
 }
