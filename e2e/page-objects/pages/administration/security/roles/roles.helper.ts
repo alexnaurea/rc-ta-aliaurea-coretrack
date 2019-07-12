@@ -72,4 +72,19 @@ export class RolesHelper {
             await label.exportToWord.clickLink();
         });
     }
+
+    static async verifyAddRole() {
+        StepLogger.subStep('verify Add Role');
+        await RolesPage.addRoleButton.verifyDisplayedStatus();
+    }
+
+    static async clickAddRole() {
+        StepLogger.subStep('click Add Role');
+        await RolesPage.addRoleButton.clickLink();
+    }
+
+    static async verifyAddRolesPageDisplayed() {
+        StepLogger.subVerification('Verify " add Roles" page displayed');
+        await RolesPage.addRolesPageTitle.verifyDisplayedStatus();
+    }
 }
