@@ -9,5 +9,6 @@ export class RolesConstants {
         downloadsLink: 'chrome://downloads/',
         fileName: 'CoreTracExport',
         excelFileExtension: '.xls',
+        wordFileExtension: '.doc',
     });
 }
