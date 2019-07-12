@@ -35,4 +35,12 @@ export class RolesHelper {
             await label.exportToExcel.verifyDisplayedStatus();
         });
     }
+
+    static async verifyExportToWord() {
+        const label = DistrictsPage.buttons;
+        StepLogger.subVerification('Verify export to word');
+        await PageHelperExtension.executeInIFrame([CommonPage.resourceOneIFrame], async () => {
+            await label.exportToWord.verifyDisplayedStatus();
+        });
+    }
 }
