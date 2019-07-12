@@ -1,6 +1,10 @@
+import { browser } from 'protractor';
+
 import { StepLogger } from '../../../../../../core/logger/step-logger';
+import { AlertHelper } from '../../../../../components/html/alert-helper';
 import { PageHelper } from '../../../../../components/html/page-helper';
 import { PageHelperExtension } from '../../../../../components/html/page-helper-extended';
+import { ExpectationHelper } from '../../../../../components/misc-utils/expectation-helper';
 import { CommonPage } from '../../../common/common.po';
 import { ReportWriterReportsPage } from '../../../report-writer-reports-page/report-writer-reports-page.po';
 import { ReferralSourcesPage } from '../../configuration/referral-sources/referral-sources.po';
@@ -42,5 +46,22 @@ export class RolesHelper {
         await PageHelperExtension.executeInIFrame([CommonPage.resourceOneIFrame], async () => {
             await label.exportToWord.verifyDisplayedStatus();
         });
+    }
+
+    static async clickExportToExcel() {
+        const label = DistrictsPage.buttons;
+        StepLogger.subStep('click export to excel');
+        await PageHelperExtension.executeInIFrame([CommonPage.resourceOneIFrame], async () => {
+            await label.exportToExcel.clickLink();
+        });
+    }
+
+    static async verifyDownload(excelFileName: string) {
+        StepLogger.subStep('verify linked file had .xls value');
+        await PageHelper.goToUrl(RolesConstants.elementNames.downloadsLink);
+        await AlertHelper.acceptAlertIfExists();
+        const fileName = await browser.executeScript(`return document.querySelector('downloads-manager').shadowRoot.querySelector
+            ('#downloadsList downloads-item').shadowRoot.querySelector('div#content #file-link').text`);
+        await ExpectationHelper.verifyStringValueContain(fileName.toString(), excelFileName);
     }
 }
