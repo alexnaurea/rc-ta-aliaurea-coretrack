@@ -1,5 +1,6 @@
 export class RolesConstants {
     static readonly pageTitle = 'Manage Roles';
+    static readonly addRolePageTitle = 'New Role';
 
     static readonly elementNames = Object.freeze({
         role: 'Role',
@@ -10,5 +11,6 @@ export class RolesConstants {
         fileName: 'CoreTracExport',
         excelFileExtension: '.xls',
         wordFileExtension: '.doc',
+        roleButton: 'Add Role',
     });
 }
