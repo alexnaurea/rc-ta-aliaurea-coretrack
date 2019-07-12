@@ -1,0 +1,87 @@
+#!/usr/bin/env groovy
+
+pipeline {
+    agent {
+        label "coretrac-js"
+    }
+        environment {
+            SEQUENTIALSUITES = "${env.SEQUENTIALSUITES}"
+            PARALLELSUITES = "${env.PARALLELSUITES}"
+            TME_CONFIG = "${env.PROTRACTOR_CONFIG_FILE}"
+        }
+
+    stages {
+        stage('Setup') {
+            steps {
+                 sh "jenkins/scripts/setup.sh"
+            }
+        }
+        stage('Test Automation Stages: Sequential Suites') {
+            steps {
+                script {
+                    if (env.SEQUENTIALSUITES && "${env.SEQUENTIALSUITES}"!= "null") {
+                        echo "${env.SEQUENTIALSUITES}"
+                        def tests = [:]
+                        List<String> items = Arrays.asList("${SEQUENTIALSUITES}".split("\\s*,\\s*"));
+                        echo "${items}"
+                            for (f in items) {
+                                      stage("${f}") {
+                                          sh "jenkins/scripts/run-e2e.sh ${PROTRACTOR_CONFIG_FILE} ${f}"
+                                       }
+                            }
+                        echo "DONE"
+                    }
+               }
+            }
+        }
+        stage('Test Automation Stages: Parallel Suites') {
+            steps {
+                script {
+                    if (env.PARALLELSUITES && "${env.PARALLELSUITES}"!="null") {
+                          script {
+                            buildStages = prepareBuildStages();
+                          }
+                          parallel(buildStages)
+                     }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            catchError {
+                sh "jenkins/scripts/get-reports.sh"
+            }
+
+            allure([
+	        includeProperties: false,
+        	jdk: '',
+        	properties: [[key: 'allure.issues.tracker.pattern', value: 'http://jira.devfactory.com/%s']],
+        	reportBuildPolicy: 'ALWAYS',
+        	results: [[path: 'allure-results']]
+            ])
+            junit 'target/*.xml'
+            junit testDataPublishers: [[$class: 'AttachmentPublisher']], testResults: 'target/*.xml'
+            sh "jenkins/scripts/release.sh"
+        }
+    }
+}
+
+
+def prepareBuildStages() {
+    def buildStages = [:]
+    List<String> items = Arrays.asList("${PARALLELSUITES}".split("\\s*,\\s*"));
+    for (int i = 0 ; i < items.size() ; i++) {
+      echo "${items[i]}"
+      buildStages.put("${items[i]}", prepareOneBuildStage("${items[i]}"))
+    }
+    return buildStages
+}
+
+def prepareOneBuildStage(String name) {
+  return {
+    stage("Build stage:${name}") {
+       sh "jenkins/scripts/run-e2e.sh ${PROTRACTOR_CONFIG_FILE} ${name}"
+    }
+  }
+}

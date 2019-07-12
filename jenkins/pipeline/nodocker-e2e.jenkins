@@ -1,0 +1,85 @@
+#!/usr/bin/env groovy
+
+pipeline {
+    agent {
+        label "coretrac-js"
+    }
+        environment {
+            SEQUENTIALSUITES = "${env.SEQUENTIALSUITES}"
+            PARALLELSUITES = "${env.PARALLELSUITES}"
+            TME_CONFIG = "${PROTRACTOR_CONFIG_FILE}"
+        }
+
+    stages {
+        stage('Setup') {
+            steps {
+               sh 'bash ./jenkins/scripts/nodockersetup.sh'
+            }
+        }
+        stage('Test Automation Stages: Sequential Suites') {
+            steps {
+                 script {
+                    if (env.SEQUENTIALSUITES && "${env.SEQUENTIALSUITES}"!= "null") {
+                       def tests = [:]
+                       List<String> items = Arrays.asList("${SEQUENTIALSUITES}".split("\\s*,\\s*"));
+                       echo "${items}"
+                       for (f in items) {
+                             stage("${f}") {
+                                  sh "bash ./jenkins/scripts/nodocker-run-e2e.sh ${PROTRACTOR_CONFIG_FILE} ${f}"
+                             }
+                       }
+                    }
+                       echo "DONE"
+                   }
+            }
+        }
+        stage('Test Automation Stages: Parallel Suites') {
+            steps {
+                script {
+                    if (env.PARALLELSUITES && "${env.PARALLELSUITES}"!="null") {
+                        script {
+                            buildStages = prepareBuildStages();
+                         }
+                         parallel(buildStages)
+                     }
+                     echo "DONE"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            catchError {
+                sh 'bash ./jenkins/scripts/nodocker-get-reports.sh'
+            }
+
+            allure([
+            includeProperties: false,
+            jdk: '',
+            properties: [[key: 'allure.issues.tracker.pattern', value: 'http://jira.devfactory.com/%s']],
+            reportBuildPolicy: 'ALWAYS',
+            results: [[path: 'auto-generated/allure-results']]
+            ])
+            junit 'target/*.xml'
+        }
+    }
+}
+
+
+def prepareBuildStages() {
+    def buildStages = [:]
+    List<String> items = Arrays.asList("${PARALLELSUITES}".split("\\s*,\\s*"));
+    for (int i = 0 ; i < items.size() ; i++) {
+      echo "${items[i]}"
+      buildStages.put("${items[i]}", prepareOneBuildStage("${items[i]}"))
+    }
+    return buildStages
+}
+
+def prepareOneBuildStage(String name) {
+  return {
+    stage("Build stage:${name}") {
+       sh "bash ./jenkins/scripts/nodocker-run-e2e.sh ${PROTRACTOR_CONFIG_FILE} ${name}"
+    }
+  }
+}
