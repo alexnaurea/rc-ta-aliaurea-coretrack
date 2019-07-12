@@ -130,7 +130,7 @@ describe(SuiteNames.regressionSuite, () => {
 		Description
 		Active
 		Delete`);
-        // await RolesHelper.verifyColumnReporterPage();
+        await RolesHelper.verifyColumnReporterPage();
 
         StepLogger.stepId(3);
         StepLogger.step('Verify Export to Excel button is appearing on the right top side of the page.');
